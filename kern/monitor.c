@@ -110,7 +110,47 @@ mon_showmapping(int argc, char **argv, struct Trapframe *tf) {
         if (!pte || !(*pte & PTE_P)) {
             cprintf("virtual address %08x is not mapped.\n", temp);
         } else {
-            cprintf("virtual address %08x - physical address %08x, permission: ",cur_addr,PTE_ADDR(*pte));
+            cprintf("virtual address %08x - physical address %08x, permission: ", temp, PTE_ADDR(*pte));
+            char perm_PS = (*pte &PTE_PS) ? 'S':'-';
+            char perm_W = (*pte &PTE_W) ? 'W':'-';
+            char perm_U = (*pte &PTE_U) ? 'U':'-';
+            cprintf("-%c----%c%cP\n", perm_PS, perm_U, perm_W);
+        }
+    }
+    return 0;
+}
+
+int
+mon_showmapping(int argc, char **argv, struct Trapframe *tf) {
+    if(argc != 3){
+        cprintf("Usage:showmappings 0xbegin_addr 0xend_addr\n");
+        return -1;
+    }
+    char *err;
+    uintptr_t begin_addr = strtol(argv[2], &err, 16);
+    if (*err) {
+        cprintf("Invaild begin address, input begin address with 16base.\n");
+        return -1;
+    }
+
+    uintptr_t end_addr = strtol(argv[2], &err, 16);
+    if (*err) {
+        cprintf("Invaild end address, input begin address with 16base.\n");
+        return -1;
+    }
+
+    begin_addr = ROUNDUP(begin_addr, PGSIZE);
+    end_addr = ROUNDUP(end_addr, PGSIZE);
+
+    uintptr_t temp = begin_addr;
+
+    for (; temp <= end_addr; temp += PGSIZE) {
+        pte_t * pte = pgdir_walk(kern_pgdir, (void *)temp, 0);
+
+        if (!pte || !(*pte & PTE_P)) {
+            cprintf("virtual address %08x is not mapped.\n", temp);
+        } else {
+            cprintf("virtual address %08x - physical address %08x, permission: ", temp, PTE_ADDR(*pte));
             char perm_PS = (*pte &PTE_PS) ? 'S':'-';
             char perm_W = (*pte &PTE_W) ? 'W':'-';
             char perm_U = (*pte &PTE_U) ? 'U':'-';
