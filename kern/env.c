@@ -163,7 +163,6 @@ env_init_percpu(void)
 static int
 env_setup_vm(struct Env *e)
 {
-	int i;
 	struct PageInfo *p = NULL;
 
 	// Allocate a page for the page directory
@@ -285,7 +284,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 	    if (!(new_page = page_alloc(ALLOC_ZERO))) {
 	        panic("page alloc failed.\n");
 	    }
-	    if (page_insert(e->env_pgdir, new_page, va, PTE_U | PTE_P)) {
+	    if (page_insert(e->env_pgdir, new_page, va, PTE_U | PTE_W)) {
 	        panic("page mapping failed.\n");
 	    }
 	}
